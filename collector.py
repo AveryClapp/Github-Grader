@@ -1,67 +1,41 @@
 import requests
 import os
 from dotenv import load_dotenv
+from github_api import profile_data, popularity_data
+from dataclasses import dataclass
 
 load_dotenv()
 github_key = os.getenv("GITHUB_KEY")
 headers = {'Authorization': f'token {github_key}'}
 base_url = 'https://api.github.com'
 
-def get_user():
-    """
-    Fetches the username associated with the github key
-    """
-    response = requests.get(f'{base_url}/user', headers=headers).json()
-    return response.get("login", None)
+@dataclass
+class PopularityData:
+    stars: int
+    avg_stars: float
+    watchers: int
+    avg_watchers: float
+    followers: int
+    following: int
 
-def get_user_profile(username):
-    """
-    Fetches basic Github profile information
-    """
-    response = requests.get(f'{base_url}/users/{username}', headers=headers).json()
-    return {
-        'login': response.get('login'),
-        'public_repos': response.get('public_repos', 0),
-        'followers': response.get('followers', 0),
-        'following': response.get('following', 0)
-    }
+@dataclass
+class ActivityData:
 
-def get_all_repos(user):
-    """
-    Retrieves all public repositories and returns relevant info
-    """
-    response = requests.get(f'{base_url}/users/{user}/repos', headers=headers).json()
-    parsed_repos = []
-    for repo in response:
-        parsed_repos.append(repo['name'])
-    return parsed_repos
 
-def get_stargazers(user, repos):
-    """
-    Returns total stars and average stars
-    """
-    total_stars = 0
-    num_repos = 0
-    for repo in repos:
-        response = requests.get(f'{base_url}/repos/{user}/{repo}/stargazers').json()
-        num_repos += 1
-        if response:
-            total_stars += 1
-    return (total_stars, float(total_stars/num_repos))
 
-def get_watchers(user, repos):
-    """
-    Returns total watchers and average watchers
-    """
-    total_stars = 0
-    num_repos = 0
-    for repo in repos:
-        response = requests.get(f'{base_url}/repos/{user}/{repo}/subscribers').json()
-        num_repos += 1
-        if response:
-            total_stars += 1
-    return (total_stars, float(total_stars/num_repos))
 
+
+def collector(): 
+    """
+    Aggregates all areas of data and sends them via
+    gRPC service. Only sends requested ones. (Obviously)
+    """
+    user, repos = profile_data.get_profile_data()
+    pop_data = popularity_data.get_popularity_data(user, repos)
+    print(pop_data)
+    return 1
+
+      
 def get_repo_commits(owner, repo, per_page=100):
     """
     Gets recent commits from a Github repository
@@ -130,4 +104,4 @@ def get_issues(owner, repo):
 
 
 if __name__ == '__main__':
-    print(get_watchers("AveryClapp", get_all_repos("AveryClapp")))
+    print(collector())
