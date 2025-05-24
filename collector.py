@@ -1,16 +1,23 @@
 import requests
 import os
 from dotenv import load_dotenv
+
 load_dotenv()
 github_key = os.getenv("GITHUB_KEY")
 headers = {'Authorization': f'token {github_key}'}
 base_url = 'https://api.github.com'
 
 def get_user():
+    """
+    Fetches the username associated with the github key
+    """
     response = requests.get(f'{base_url}/user', headers=headers).json()
     return response.get("login", None)
 
 def get_user_profile(username):
+    """
+    Fetches basic Github profile information
+    """
     response = requests.get(f'{base_url}/users/{username}', headers=headers).json()
     return {
         'login': response.get('login'),
@@ -20,21 +27,45 @@ def get_user_profile(username):
     }
 
 def get_all_repos(user):
+    """
+    Retrieves all public repositories and returns relevant info
+    """
     response = requests.get(f'{base_url}/users/{user}/repos', headers=headers).json()
     parsed_repos = []
     for repo in response:
-        parsed_repos.append({
-            'name': repo.get('name'),
-            'language': repo.get('language'),
-            'stargazers_count': repo.get('stargazers_count', 0),
-            'forks_count': repo.get('forks_count', 0),
-            'size': repo.get('size', 0),
-            'fork': repo.get('fork', False),
-            'archived': repo.get('archived', False)
-        })
+        parsed_repos.append(repo['name'])
     return parsed_repos
 
+def get_stargazers(user, repos):
+    """
+    Returns total stars and average stars
+    """
+    total_stars = 0
+    num_repos = 0
+    for repo in repos:
+        response = requests.get(f'{base_url}/repos/{user}/{repo}/stargazers').json()
+        num_repos += 1
+        if response:
+            total_stars += 1
+    return (total_stars, float(total_stars/num_repos))
+
+def get_watchers(user, repos):
+    """
+    Returns total watchers and average watchers
+    """
+    total_stars = 0
+    num_repos = 0
+    for repo in repos:
+        response = requests.get(f'{base_url}/repos/{user}/{repo}/subscribers').json()
+        num_repos += 1
+        if response:
+            total_stars += 1
+    return (total_stars, float(total_stars/num_repos))
+
 def get_repo_commits(owner, repo, per_page=100):
+    """
+    Gets recent commits from a Github repository
+    """
     commits = []
     page = 1
     while page <= 3:
@@ -58,10 +89,16 @@ def get_repo_commits(owner, repo, per_page=100):
     return commits
 
 def get_repo_languages(owner, repo):
+    """
+    Returns the language distribution in the repository
+    """
     response = requests.get(f'{base_url}/repos/{owner}/{repo}/languages', headers=headers).json()
     return response
 
 def get_pull_requests(owner, repo):
+    """
+    Returns relevant information on pull requests in a repo
+    """
     response = requests.get(f'{base_url}/repos/{owner}/{repo}/pulls', 
                           headers=headers, 
                           params={'state': 'all'}).json()
@@ -76,6 +113,9 @@ def get_pull_requests(owner, repo):
     return parsed_prs
 
 def get_issues(owner, repo):
+    """
+    Returns the issues on user's public repositories
+    """
     response = requests.get(f'{base_url}/repos/{owner}/{repo}/issues', 
                           headers=headers, 
                           params={'state': 'all'}).json()
@@ -88,36 +128,6 @@ def get_issues(owner, repo):
             })
     return parsed_issues
 
-def get_rate_limit():
-    response = requests.get(f'{base_url}/rate_limit', headers=headers).json()
-    return {
-        'remaining': response.get('rate', {}).get('remaining'),
-        'reset': response.get('rate', {}).get('reset')
-    }
-
-def get_grading_data(username):
-    profile = get_user_profile(username)
-    repos = get_all_repos(username)
-    
-    grading_data = {
-        'profile': profile,
-        'repositories': []
-    }
-    
-    for repo in repos:
-        if not repo['fork'] and not repo['archived']:
-            repo_data = {
-                'details': repo,
-                'languages': get_repo_languages(username, repo['name']),
-                'commits': get_repo_commits(username, repo['name']),
-                'pull_requests': get_pull_requests(username, repo['name']),
-                'issues': get_issues(username, repo['name'])
-            }
-            grading_data['repositories'].append(repo_data)
-    
-    return grading_data
 
 if __name__ == '__main__':
-    data = get_grading_data("AveryClapp")
-    print(data)
-    print(f"Found {len(data['repositories'])} non-fork repositories")
+    print(get_watchers("AveryClapp", get_all_repos("AveryClapp")))
