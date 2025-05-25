@@ -1,0 +1,90 @@
+syntax = "proto3";
+
+package github_grader;
+
+service PopularityService {
+  rpc GetPopularityData(PopularityRequest) returns (PopularityReply);
+}
+
+service ActivityService {
+  rpc GetActivityData(ActivityRequest) returns (ActivityReply);
+}
+
+service CodeQualityService {
+  rpc GetCodeQualityData(CodeQualityRequest) returns (CodeQualityReply);
+}
+
+service CollaborationService {
+  rpc GetCollaborationData(CollaborationRequest) returns (CollaborationReply);
+}
+
+service ProfileService {
+  rpc GetCompleteProfile(ProfileRequest) returns (ProfileReply);
+}
+
+message PopularityRequest { string username = 1; }
+
+message ActivityRequest { string username = 1; }
+
+message CodeQualityRequest { string username = 1; }
+
+message CollaborationRequest { string username = 1; }
+
+message ProfileRequest {
+  string username = 1;
+  bool include_popularity = 2;
+  bool include_activity = 3;
+  bool include_code_quality = 4;
+  bool include_collaboration = 5;
+}
+
+message PopularityReply {
+  int32 stars = 1;
+  float avg_stars = 2;
+  int32 watchers = 3;
+  float avg_watchers = 4;
+  int32 followers = 5;
+  int32 following = 6;
+}
+
+message ActivityReply {
+  int32 total_commits = 1;
+  float avg_commits_per_repo = 2;
+  int32 recent_activity_score = 3;
+  float consistency_score = 4;
+  int32 active_days = 5;
+}
+
+message CodeQualityReply {
+  map<string, int32> primary_languages = 1;
+  float commit_message_quality_score = 2;
+  float avg_additions_per_commit = 3;
+  float avg_deletions_per_commit = 4;
+}
+
+message CollaborationReply {
+  int32 total_prs = 1;
+  int32 merged_prs = 2;
+  float pr_merge_rate = 3;
+  int32 total_issues = 4;
+  int32 closed_issues = 5;
+  float issue_close_rate = 6;
+  float avg_pr_size = 7;
+}
+
+message ProfileReply {
+  string username = 1;
+  repeated string repositories = 2;
+  PopularityReply popularity = 3;
+  ActivityReply activity = 4;
+  CodeQualityReply code_quality = 5;
+  CollaborationReply collaboration = 6;
+  float overall_score = 7;
+  string grade = 8;
+}
+
+message ErrorResponse {
+  int32 code = 1;
+  string message = 2;
+  string details = 3;
+}
