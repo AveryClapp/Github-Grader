@@ -14,9 +14,7 @@ def get_popularity_data(user):
     """
     repos = get_all_repos(user)
     try:
-        followers_data = get_follows(user)
-        followers = followers_data.get('followers', 0)
-        following = followers_data.get('following', 0)
+        followers, following = get_follows(user)
         
         num_repos = 0
         stars = 0
