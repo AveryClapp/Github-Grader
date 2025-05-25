@@ -54,20 +54,9 @@ def get_follows(user):
     """
     Get the follower and following metrics
     """
-    try:
-        response = requests.get(f'{base_url}/users/{user}', headers=headers)
-        if response.status_code == 200:
-            data = response.json()
-            return {
-                'followers': data.get('followers', 0),
-                'following': data.get('following', 0)
-            }
-        else:
-            print(f"Error fetching user data: {response.status_code}")
-            return {'followers': 0, 'following': 0}
-    except Exception as e:
-        print(f"Error getting follows: {str(e)}")
-        return {'followers': 0, 'following': 0}
+    response = requests.get(f'{base_url}/users/{user}', headers=headers)
+    data = response.json()
+    return data.get('followers', 0), data.get('following', 0)
 
 def get_stargazers(user, repo):
     """
